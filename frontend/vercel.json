@@ -1,5 +1,6 @@
 {
-  "buildCommand": "flutter build web --dart-define=API_BASE_URL=$API_BASE_URL",
+  "installCommand": "if ! command -v flutter &> /dev/null; then git clone https://github.com/flutter/flutter.git -b stable --depth 1 && export PATH=\"$PATH:`pwd`/flutter/bin\" && flutter doctor; fi && flutter pub get",
+  "buildCommand": "flutter build web --dart-define=API_BASE_URL=https://backend-git-main-arjuns-projects-8874ea54.vercel.app",
   "outputDirectory": "build/web",
   "framework": null,
   "rewrites": [
