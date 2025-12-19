@@ -439,4 +439,25 @@ For issues and questions:
 
 ---
 
+## 🚀 Deployment
+
+### Quick Deploy: Intel Server + Vercel
+
+**Backend (Intel Server):**
+```bash
+cd backend
+./setup_env.sh  # Setup Firebase credentials
+./deploy.sh production
+```
+
+**Frontend (Vercel):**
+1. Push to GitHub
+2. Import to Vercel
+3. Set environment variable: `API_BASE_URL=http://your-server-ip:8000`
+4. Deploy
+
+📖 **Full Guide:** See [QUICK_DEPLOY.md](QUICK_DEPLOY.md) and [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
 **Built for ML Hackathons** | **100% Free Stack** | **Production Ready**

@@ -5,16 +5,27 @@ from typing import List, Optional
 from app.db.models import QueueStatus, TeamInDB, QueueEntry, EvaluationResult, LeaderboardEntry
 from app.config import FIREBASE_CREDENTIALS_PATH
 import os
+import json
 
 db = None
 
 def init_firebase():
     global db
     if not firebase_admin._apps:
-        if os.path.exists(FIREBASE_CREDENTIALS_PATH):
+        # Try to load from environment variable first
+        firebase_creds_json = os.getenv('FIREBASE_CREDENTIALS_JSON')
+        
+        if firebase_creds_json:
+            # Load credentials from environment variable
+            cred_dict = json.loads(firebase_creds_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+        elif os.path.exists(FIREBASE_CREDENTIALS_PATH):
+            # Fallback to file-based credentials for local development
             cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
             firebase_admin.initialize_app(cred)
         else:
+            # Use default credentials (for Google Cloud environments)
             firebase_admin.initialize_app()
         db = firestore.client()
     return db

@@ -57,3 +57,5 @@ flutter_*.log
 # Firebase credentials (sensitive)
 **/firebase-credentials.json
 firebase-credentials.json
+**/portal-11326-firebase-adminsdk-fbsvc-*.json
+portal-11326-firebase-adminsdk-fbsvc-*.json

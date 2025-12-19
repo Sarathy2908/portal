@@ -2,9 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
+from dotenv import load_dotenv
 from app.api import submit, status, leaderboard, auth, test_auth
 from app.db.firebase_service import init_firebase
 from app.core.worker import start_worker, stop_worker
+from app.config import ALLOWED_ORIGINS
+
+# Load environment variables from .env file
+load_dotenv()
 
 worker = None
 
@@ -25,7 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
