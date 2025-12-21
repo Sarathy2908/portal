@@ -4,7 +4,8 @@ set -e
 
 echo "Installing Flutter..."
 
-# Install Flutter
+# Install Flutter in parent directory
+cd ..
 git clone https://github.com/flutter/flutter.git -b stable --depth 1
 export PATH="$PATH:`pwd`/flutter/bin"
 
@@ -13,6 +14,9 @@ flutter --version
 flutter doctor
 
 echo "Building Flutter web app..."
+
+# Go back to frontend directory
+cd frontend
 
 # Get dependencies
 flutter pub get
