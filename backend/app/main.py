@@ -2,24 +2,36 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
+import os
 from dotenv import load_dotenv
-from app.api import submit, status, leaderboard, auth, test_auth
+from app.api import submit, status, leaderboard, auth, test_auth, process
 from app.db.firebase_service import init_firebase
-from app.core.worker import start_worker, stop_worker
 from app.config import ALLOWED_ORIGINS
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Check if running on Vercel (serverless)
+IS_VERCEL = os.getenv("VERCEL") == "1"
 
 worker = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_firebase()
-    global worker
-    worker = await start_worker()
+    
+    # Only start background worker if not on Vercel
+    if not IS_VERCEL:
+        from app.core.worker import start_worker, stop_worker
+        global worker
+        worker = await start_worker()
+    
     yield
-    await stop_worker()
+    
+    # Only stop worker if it was started
+    if not IS_VERCEL and worker:
+        from app.core.worker import stop_worker
+        await stop_worker()
 
 app = FastAPI(
     title="ML Hackathon Evaluation Platform",
@@ -41,6 +53,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(submit.router, tags=["Submission"])
 app.include_router(status.router, tags=["Status"])
 app.include_router(leaderboard.router, tags=["Leaderboard"])
+app.include_router(process.router, tags=["Queue Processing"])
 
 @app.get("/")
 async def root():

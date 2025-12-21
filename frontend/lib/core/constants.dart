@@ -1,8 +1,7 @@
 class AppConstants {
-  // Use environment variable for API URL, fallback to Vercel backend
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://backend-git-main-arjuns-projects-8874ea54.vercel.app',
+    defaultValue: 'http://localhost:8000',
   );
   
   static const String submitEndpoint = '/submit-endpoint';

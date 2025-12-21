@@ -11,5 +11,16 @@
       "src": "/(.*)",
       "dest": "app/main.py"
     }
+  ],
+  "env": {
+    "FIREBASE_CREDENTIALS_JSON": "@firebase_credentials_json",
+    "SECRET_KEY": "@secret_key",
+    "ALLOWED_ORIGINS": "@allowed_origins"
+  },
+  "crons": [
+    {
+      "path": "/process-queue",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

@@ -17,10 +17,10 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # CORS Configuration - Add your Vercel domain here
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
-if ALLOWED_ORIGINS == ["*"]:
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+if not ALLOWED_ORIGINS or ALLOWED_ORIGINS == [""]:
     ALLOWED_ORIGINS = [
         "http://localhost:*",
         "http://127.0.0.1:*",
-        "*"  # Allow all in development, restrict in production
+        "*"
     ]
