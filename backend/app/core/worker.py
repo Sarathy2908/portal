@@ -1,5 +1,5 @@
 import asyncio
-from app.core.queue_manager import process_queue
+from app.core.queue_manager import process_queue_parallel
 from app.config import QUEUE_CHECK_INTERVAL
 
 worker_task = None
@@ -12,7 +12,7 @@ async def start_worker():
 async def run_worker():
     while True:
         try:
-            await process_queue()
+            await process_queue_parallel()
         except Exception as e:
             print(f"Error in background worker: {e}")
         

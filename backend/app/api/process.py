@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from app.core.queue_manager import process_queue
+from app.core.queue_manager import process_queue_parallel
+from app.config import MAX_CONCURRENT_EVALUATIONS
 import os
 
 router = APIRouter()
@@ -7,13 +8,17 @@ router = APIRouter()
 @router.post("/process-queue")
 async def trigger_queue_processing():
     """
-    Manual endpoint to trigger queue processing.
+    Manual endpoint to trigger queue processing with parallel evaluation.
     For Vercel serverless deployment, this replaces the background worker.
     Call this endpoint periodically (e.g., via cron job or after submission).
+    Processes up to MAX_CONCURRENT_EVALUATIONS teams simultaneously.
     """
     try:
-        await process_queue()
-        return {"message": "Queue processing triggered successfully"}
+        await process_queue_parallel()
+        return {
+            "message": "Queue processing triggered successfully",
+            "max_concurrent": MAX_CONCURRENT_EVALUATIONS
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Queue processing failed: {str(e)}")
 
@@ -26,5 +31,7 @@ async def get_processing_status():
     return {
         "is_serverless": is_vercel,
         "mode": "serverless" if is_vercel else "traditional",
-        "note": "On serverless, call /process-queue to trigger evaluation" if is_vercel else "Background worker is running"
+        "max_concurrent_evaluations": MAX_CONCURRENT_EVALUATIONS,
+        "note": f"Processing up to {MAX_CONCURRENT_EVALUATIONS} evaluations in parallel. " + 
+                ("On serverless, call /process-queue to trigger evaluation" if is_vercel else "Background worker is running")
     }
