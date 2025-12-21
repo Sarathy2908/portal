@@ -55,7 +55,7 @@ app.include_router(status.router, tags=["Status"])
 app.include_router(leaderboard.router, tags=["Leaderboard"])
 app.include_router(process.router, tags=["Queue Processing"])
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "POST"])
 async def root():
     return {
         "message": "ML Hackathon Evaluation Platform API",
