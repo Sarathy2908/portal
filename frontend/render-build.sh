@@ -2,21 +2,22 @@
 
 set -e
 
+echo "Current directory: $(pwd)"
+echo "Contents: $(ls -la)"
+
 echo "Installing Flutter..."
 
-# Install Flutter in parent directory
-cd ..
+# Install Flutter in current directory
 git clone https://github.com/flutter/flutter.git -b stable --depth 1
-export PATH="$PATH:`pwd`/flutter/bin"
+export PATH="$PATH:$(pwd)/flutter/bin"
 
 # Verify Flutter installation
 flutter --version
 flutter doctor
 
 echo "Building Flutter web app..."
-
-# Go back to frontend directory
-cd frontend
+echo "Looking for lib/main.dart..."
+ls -la lib/
 
 # Get dependencies
 flutter pub get
