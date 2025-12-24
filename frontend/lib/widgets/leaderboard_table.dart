@@ -299,8 +299,13 @@ class _LeaderboardTableState extends State<LeaderboardTable> with TickerProvider
 
   Widget _buildStatusCell(LeaderboardEntry entry) {
     if (entry.isPlagiarized) {
+      String tooltipMessage = 'Plagiarism Detected';
+      if (entry.plagiarismSummary != null) {
+        tooltipMessage = 'Similar to: ${entry.plagiarismSummary!.similarTeams.join(", ")}';
+      }
+      
       return Tooltip(
-        message: 'Plagiarism Detected',
+        message: tooltipMessage,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
@@ -382,31 +387,120 @@ class _PlagiarismBadgeState extends State<_PlagiarismBadge>
 
   @override
   Widget build(BuildContext context) {
+    String tooltipMessage = 'Plagiarism detected';
+    if (widget.entry.plagiarismSummary != null) {
+      final summary = widget.entry.plagiarismSummary!;
+      tooltipMessage = 'PLAGIARISM DETECTED\n'
+          'Similar to ${summary.similarTeamsCount} team(s):\n'
+          '${summary.similarTeams.join(", ")}\n\n'
+          'Highest similarity: ${(summary.highestSimilarity * 100).toStringAsFixed(1)}%';
+    }
+
     return Tooltip(
-      message: widget.entry.plagiarismSummary != null
-          ? 'Similar to ${widget.entry.plagiarismSummary!.similarTeamsCount} team(s)\n'
-              'Highest similarity: ${(widget.entry.plagiarismSummary!.highestSimilarity * 100).toStringAsFixed(1)}%'
-          : 'Plagiarism detected',
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Color.lerp(
-                Colors.red.shade300,
-                Colors.red.shade600,
-                _controller.value,
+      message: tooltipMessage,
+      preferBelow: false,
+      child: GestureDetector(
+        onTap: () => _showPlagiarismDetails(context),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Color.lerp(
+                  Colors.red.shade300,
+                  Colors.red.shade600,
+                  _controller.value,
+                ),
+                shape: BoxShape.circle,
               ),
-              shape: BoxShape.circle,
+              child: Icon(
+                Icons.content_copy,
+                size: 16,
+                color: Colors.white,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showPlagiarismDetails(BuildContext context) {
+    if (widget.entry.plagiarismSummary == null) return;
+
+    final summary = widget.entry.plagiarismSummary!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 28),
+            const SizedBox(width: 12),
+            const Text('Plagiarism Details'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Team: ${widget.entry.teamName}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            child: Icon(
-              Icons.content_copy,
-              size: 16,
-              color: Colors.white,
+            const SizedBox(height: 16),
+            Text(
+              'Similar to ${summary.similarTeamsCount} team(s):',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-          );
-        },
+            const SizedBox(height: 8),
+            ...summary.similarTeams.map((teamId) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.arrow_right, color: Colors.red.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      teamId,
+                      style: TextStyle(color: Colors.red.shade900),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.analytics, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Highest Similarity: ${(summary.highestSimilarity * 100).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
