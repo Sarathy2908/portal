@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import asyncio
 import os
 from dotenv import load_dotenv
-from app.api import submit, status, leaderboard, auth, test_auth, process
+from app.api import submit, status, leaderboard, auth, test_auth, process, plagiarism
 from app.db.firebase_service import init_firebase
 from app.config import ALLOWED_ORIGINS
 
@@ -54,6 +54,7 @@ app.include_router(submit.router, tags=["Submission"])
 app.include_router(status.router, tags=["Status"])
 app.include_router(leaderboard.router, tags=["Leaderboard"])
 app.include_router(process.router, tags=["Queue Processing"])
+app.include_router(plagiarism.router, tags=["Plagiarism Detection"])
 
 @app.api_route("/", methods=["GET", "POST"])
 async def root():

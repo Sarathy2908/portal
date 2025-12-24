@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 from app.db.models import QueueStatus, TeamInDB, QueueEntry, EvaluationResult, LeaderboardEntry
 from app.config import FIREBASE_CREDENTIALS_PATH
 import os
@@ -125,10 +125,61 @@ def save_result(team_id: str, accuracy: float, f1_score: float, latency_ms: floa
         'evaluated_at': firestore.SERVER_TIMESTAMP
     }, merge=True)
 
+def save_predictions(team_id: str, predictions: List[int]):
+    db = get_db()
+    predictions_ref = db.collection('predictions').document(team_id)
+    predictions_ref.set({
+        'team_id': team_id,
+        'predictions': predictions,
+        'saved_at': firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+def get_all_predictions() -> Dict[str, List[int]]:
+    db = get_db()
+    predictions_docs = db.collection('predictions').stream()
+    
+    all_predictions = {}
+    for doc in predictions_docs:
+        data = doc.to_dict()
+        all_predictions[data['team_id']] = data['predictions']
+    
+    return all_predictions
+
+def save_plagiarism_data(team_id: str, plagiarism_cases: List[Dict], is_flagged: bool):
+    db = get_db()
+    plagiarism_ref = db.collection('plagiarism').document(team_id)
+    
+    plagiarism_ref.set({
+        'team_id': team_id,
+        'is_flagged': is_flagged,
+        'plagiarism_cases': plagiarism_cases,
+        'checked_at': firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+def get_plagiarism_data(team_id: str) -> Optional[Dict]:
+    db = get_db()
+    doc = db.collection('plagiarism').document(team_id).get()
+    
+    if doc.exists:
+        return doc.to_dict()
+    return None
+
+def get_all_plagiarism_flags() -> Dict[str, bool]:
+    db = get_db()
+    plagiarism_docs = db.collection('plagiarism').stream()
+    
+    flags = {}
+    for doc in plagiarism_docs:
+        data = doc.to_dict()
+        flags[data['team_id']] = data.get('is_flagged', False)
+    
+    return flags
+
 def get_leaderboard() -> List[LeaderboardEntry]:
     db = get_db()
     
     results_docs = db.collection('results').stream()
+    plagiarism_flags = get_all_plagiarism_flags()
     
     results_list = []
     for doc in results_docs:
@@ -138,13 +189,31 @@ def get_leaderboard() -> List[LeaderboardEntry]:
         team_doc = db.collection('teams').document(team_id).get()
         if team_doc.exists:
             team_data = team_doc.to_dict()
+            
+            plagiarism_data = get_plagiarism_data(team_id)
+            is_plagiarized = plagiarism_flags.get(team_id, False)
+            plagiarism_summary = None
+            
+            if plagiarism_data and is_plagiarized:
+                cases = plagiarism_data.get('plagiarism_cases', [])
+                if cases:
+                    from app.db.models import PlagiarismSummary
+                    plagiarism_summary = PlagiarismSummary(
+                        is_flagged=True,
+                        similar_teams_count=len(cases),
+                        highest_similarity=cases[0]['similarity_score'],
+                        similar_teams=[case['team_id'] for case in cases]
+                    )
+            
             results_list.append({
                 'team_id': team_id,
                 'team_name': team_data['team_name'],
                 'accuracy': result_data.get('accuracy', 0),
                 'f1_score': result_data.get('f1_score', 0),
                 'latency_ms': result_data.get('latency_ms', 0),
-                'evaluated_at': result_data.get('evaluated_at')
+                'evaluated_at': result_data.get('evaluated_at'),
+                'is_plagiarized': is_plagiarized,
+                'plagiarism_summary': plagiarism_summary
             })
     
     results_list.sort(key=lambda x: (-x['accuracy'], -x['f1_score'], x['latency_ms']))
@@ -158,7 +227,9 @@ def get_leaderboard() -> List[LeaderboardEntry]:
             accuracy=result['accuracy'],
             f1_score=result['f1_score'],
             latency_ms=result['latency_ms'],
-            evaluated_at=result['evaluated_at']
+            evaluated_at=result['evaluated_at'],
+            is_plagiarized=result['is_plagiarized'],
+            plagiarism_summary=result['plagiarism_summary']
         ))
     
     return leaderboard

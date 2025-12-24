@@ -19,9 +19,9 @@ class Evaluator:
         print(f"Test data loaded - Features: {self.X_test.shape[1]}, Samples: {len(self.y_true)}")
         print(f"Class distribution - Legitimate: {sum(self.y_true == 0)}, Fraud: {sum(self.y_true == 1)}")
     
-    async def evaluate_team(self, endpoint_url: str) -> Tuple[bool, Optional[Dict], Optional[str]]:
+    async def evaluate_team(self, endpoint_url: str) -> Tuple[bool, Optional[Dict], Optional[str], Optional[list]]:
         if self.X_test is None or self.y_true is None:
-            return False, None, "Test data not loaded"
+            return False, None, "Test data not loaded", None
         
         payload = {
             "inputs": self.X_test.to_dict(orient='records')
@@ -35,18 +35,18 @@ class Evaluator:
         )
         
         if response is None:
-            return False, None, "Failed to get response from endpoint"
+            return False, None, "Failed to get response from endpoint", None
         
         if 'predictions' not in response:
-            return False, None, "Response missing 'predictions' field"
+            return False, None, "Response missing 'predictions' field", None
         
         predictions = response['predictions']
         
         if not isinstance(predictions, list):
-            return False, None, "Predictions must be a list"
+            return False, None, "Predictions must be a list", None
         
         if len(predictions) != len(self.y_true):
-            return False, None, f"Expected {len(self.y_true)} predictions, got {len(predictions)}"
+            return False, None, f"Expected {len(self.y_true)} predictions, got {len(predictions)}", None
         
         try:
             y_pred = np.array(predictions)
@@ -63,7 +63,9 @@ class Evaluator:
             
             print(f"Evaluation complete - Accuracy: {accuracy:.4f}, F1: {f1:.4f}, Latency: {latency_ms:.2f}ms")
             
-            return True, result, None
+            predictions_list = y_pred.tolist()
+            
+            return True, result, None, predictions_list
             
         except Exception as e:
-            return False, None, f"Error calculating metrics: {str(e)}"
+            return False, None, f"Error calculating metrics: {str(e)}", None

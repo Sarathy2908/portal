@@ -1,5 +1,5 @@
 from pydantic import BaseModel, HttpUrl
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
@@ -34,6 +34,17 @@ class EvaluationResult(BaseModel):
     latency_ms: float
     evaluated_at: datetime
 
+class PlagiarismCase(BaseModel):
+    team_id: str
+    similarity_score: float
+    detected_at: datetime
+
+class PlagiarismSummary(BaseModel):
+    is_flagged: bool
+    similar_teams_count: int
+    highest_similarity: float
+    similar_teams: List[str]
+
 class LeaderboardEntry(BaseModel):
     rank: int
     team_id: str
@@ -42,6 +53,8 @@ class LeaderboardEntry(BaseModel):
     f1_score: float
     latency_ms: float
     evaluated_at: datetime
+    is_plagiarized: Optional[bool] = False
+    plagiarism_summary: Optional[PlagiarismSummary] = None
 
 class SubmitResponse(BaseModel):
     message: str
